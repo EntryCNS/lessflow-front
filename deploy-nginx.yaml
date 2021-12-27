@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-nginx
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 5 # 5개의 파드 생성
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.20.0 # nginx 1.20.0 버전 사용
+        ports:
+        - containerPort: 80
