@@ -1,4 +1,5 @@
 import { json } from "express";
+import { useEffect } from "react";
 import {
   interpolate,
   Sequence,
@@ -6,6 +7,8 @@ import {
   useVideoConfig,
 } from "remotion";
 import TitleRect from "./components/TitleRect";
+import data from "./newsData";
+import { videoFrameDuration } from "./Video";
 
 type sentence = { id: number; content: string; duration: number };
 function getStartTime(sentences: Array<sentence>, item: sentence) {
@@ -13,7 +16,7 @@ function getStartTime(sentences: Array<sentence>, item: sentence) {
 
   let time = 0;
   for (let i = 0; i < idx; i++) {
-    console.log(`${sentences[i].content}(${sentences[i].duration}초)`);
+    //console.log(`${sentences[i].content}(${sentences[i].duration}초)`);
     time += sentences[i].duration;
   }
 
@@ -33,12 +36,18 @@ const Article: React.FC<{
     provider: string;
     backgroundImage: string;
     sentences: Array<sentence>;
-  };
-}> = ({ news }) => {
+  },
+  beforeDurationFrame: number
+}> = ({ beforeDurationFrame, news }) => {
   const frame = useCurrentFrame();
   const videoConfig = useVideoConfig();
   const TIMEPADDING_FORFRAME = TIME_PADDING * videoConfig.fps;
-  console.log(news.sentences);
+  //console.log(news.sentences);
+
+  useEffect(() => {
+    //console.log(`frame: ${beforeDurationFrame + frame} / max: ${videoFrameDuration}\n${(beforeDurationFrame + frame) / videoFrameDuration}`)
+    console.log(`start: ${beforeDurationFrame} / frame: ${frame} / cur: ${beforeDurationFrame + frame} / max: ${videoFrameDuration}\n${(beforeDurationFrame + frame) / videoFrameDuration}`)
+  })
 
   return (
     <>
@@ -109,7 +118,7 @@ const Article: React.FC<{
           <div
             style={{
               width: "100%",
-              height: "28.5%",
+              height: "29%",
               position: "relative",
             }}
           >
@@ -171,11 +180,17 @@ const Article: React.FC<{
           <div
             style={{
               width: "100%",
-              height: "1.5%",
-              backgroundColor: "violet",
+              height: "1%",
+              backgroundColor: "rgba(0, 0, 0, 0.25)",
               position: "relative",
             }}
-          ></div>
+          >
+            <div style={{ 
+              height: "100%",
+              width: `${(beforeDurationFrame + frame) / videoFrameDuration * 100}%`,
+              backgroundColor: "#3e5aec"
+            }} />
+          </div>
         </div>
       </div>
     </>
