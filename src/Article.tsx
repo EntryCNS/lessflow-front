@@ -1,12 +1,14 @@
 import { json } from "express";
 import { useEffect } from "react";
 import {
+  Audio,
   interpolate,
   Sequence,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
 import TitleRect from "./components/TitleRect";
+import newsData from "./newsData";
 import data from "./newsData";
 import { videoFrameDuration } from "./Video";
 
@@ -29,6 +31,11 @@ function sumSentenceTime(sentences: Array<sentence>) {
   return time;
 }
 
+const audioMap = new Map<string, number>();
+newsData.forEach((news) => {
+  audioMap.set(news.title, newsData.indexOf(news) + 1);
+});
+
 const TIME_PADDING = 0.7;
 const Article: React.FC<{
   news: {
@@ -36,8 +43,8 @@ const Article: React.FC<{
     provider: string;
     backgroundImage: string;
     sentences: Array<sentence>;
-  },
-  beforeDurationFrame: number
+  };
+  beforeDurationFrame: number;
 }> = ({ beforeDurationFrame, news }) => {
   const frame = useCurrentFrame();
   const videoConfig = useVideoConfig();
@@ -46,19 +53,43 @@ const Article: React.FC<{
 
   useEffect(() => {
     //console.log(`frame: ${beforeDurationFrame + frame} / max: ${videoFrameDuration}\n${(beforeDurationFrame + frame) / videoFrameDuration}`)
-    console.log(`start: ${beforeDurationFrame} / frame: ${frame} / cur: ${beforeDurationFrame + frame} / max: ${videoFrameDuration}\n${(beforeDurationFrame + frame) / videoFrameDuration}`)
-  })
+    console.log(
+      `start: ${beforeDurationFrame} / frame: ${frame} / cur: ${
+        beforeDurationFrame + frame
+      } / max: ${videoFrameDuration}\n${
+        (beforeDurationFrame + frame) / videoFrameDuration
+      }`
+    );
+  });
+
+  const renderedElements: Array<any> = news.sentences.map(
+    (sentenceData, index) => {
+      return (
+        <Sequence
+          from={Math.floor(getStartTime(news.sentences, sentenceData) * frame)}
+        >
+          <Audio
+            src={require(`../audio/article${audioMap.get(news.title)}/audio${
+              index + 1
+            }.mp3`)}
+          />
+        </Sequence>
+      );
+    }
+  );
 
   return (
     <>
-      <div style={{
-        flex: 1,
-        height: "100%",
-        position: "relative",
-        backgroundImage:
-          `url("${news.backgroundImage}")`,
-        backgroundSize: "cover",
-      }}>
+      {/* {...renderedElements} */}
+      <div
+        style={{
+          flex: 1,
+          height: "100%",
+          position: "relative",
+          backgroundImage: `url("${news.backgroundImage}")`,
+          backgroundSize: "cover",
+        }}
+      >
         <div
           style={{
             flex: 1,
@@ -69,49 +100,58 @@ const Article: React.FC<{
           }}
         >
           <div style={{ width: "100%", height: "70%" }}>
-            {news.sentences.map((it) => {
+            {news.sentences.map((it, index) => {
               const next = news.sentences[news.sentences.indexOf(it) + 1] || {
                 id: null,
                 content: "",
                 duration: 0,
               };
               return (
-                <Sequence
-                  from={
-                    TIMEPADDING_FORFRAME +
-                    Math.round(getStartTime(news.sentences, it) * videoConfig.fps)
-                  }
-                  durationInFrames={Math.round(videoConfig.fps * it.duration)}
-                >
-                  <div>
-                    <h3
-                      style={{
-                        width: "80%",
-                        fontSize: "55px",
-                        marginTop: "100px",
-                        marginLeft: "50px",
-                        color: "white",
-                        wordBreak: "keep-all",
-                        fontWeight: "700",
-                        //   textShadow: "0 0 5px #000",
-                      }}
-                    >
-                      {it.content}
-                    </h3>
-                    <h4
-                      style={{
-                        width: "60%",
-                        fontSize: "45px",
-                        marginTop: "50px",
-                        marginLeft: "50px",
-                        color: "#ccc",
-                        wordBreak: "keep-all",
-                      }}
-                    >
-                      {next.content}
-                    </h4>
-                  </div>
-                </Sequence>
+                <>
+                  <Sequence
+                    from={
+                      TIMEPADDING_FORFRAME +
+                      Math.round(
+                        getStartTime(news.sentences, it) * videoConfig.fps
+                      )
+                    }
+                    durationInFrames={Math.round(videoConfig.fps * it.duration)}
+                  >
+                    <div>
+                      <Audio
+                        src={require(`../audio/article${audioMap.get(
+                          news.title
+                        )}/audio${index + 1}.mp3`)}
+                      />
+                      <h3
+                        style={{
+                          width: "80%",
+                          fontSize: "55px",
+                          marginTop: "100px",
+                          marginLeft: "50px",
+                          color: "white",
+                          wordBreak: "keep-all",
+                          fontWeight: "700",
+                          //   textShadow: "0 0 5px #000",
+                        }}
+                      >
+                        {it.content}
+                      </h3>
+                      <h4
+                        style={{
+                          width: "60%",
+                          fontSize: "45px",
+                          marginTop: "50px",
+                          marginLeft: "50px",
+                          color: "#ccc",
+                          wordBreak: "keep-all",
+                        }}
+                      >
+                        {next.content}
+                      </h4>
+                    </div>
+                  </Sequence>
+                </>
               );
             })}
           </div>
@@ -185,11 +225,15 @@ const Article: React.FC<{
               position: "relative",
             }}
           >
-            <div style={{ 
-              height: "100%",
-              width: `${(beforeDurationFrame + frame) / videoFrameDuration * 100}%`,
-              backgroundColor: "#3e5aec"
-            }} />
+            <div
+              style={{
+                height: "100%",
+                width: `${
+                  ((beforeDurationFrame + frame) / videoFrameDuration) * 100
+                }%`,
+                backgroundColor: "#3e5aec",
+              }}
+            />
           </div>
         </div>
       </div>
